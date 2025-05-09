@@ -1,0 +1,98 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: 'Times New Roman', serif;
+    color: #f8f8f8;
+}
+
+#scene-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.nav-buttons {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+}
+
+.nav-btn {
+    background: rgba(107, 70, 193, 0.7);
+    border: 2px solid #d4af37;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Times New Roman', serif;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    background: rgba(157, 110, 243, 0.9);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.content-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(30, 15, 60, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    border: 2px solid #d4af37;
+    max-width: 600px;
+    width: 80%;
+    display: none;
+    z-index: 200;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #d4af37;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.skills-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.skills-list li {
+    margin: 15px 0;
+    padding-left: 30px;
+    position: relative;
+}
+
+.skills-list li:before {
+    content: "•";
+    color: #d4af37;
+    font-size: 24px;
+    position: absolute;
+    left: 0;
+    top: -5px;
+}
+
+.project-card {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    margin: 10px 0;
+    border-left: 3px solid #d4af37;
+}
+
+/* Add more magical styles as needed */
