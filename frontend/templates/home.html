@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fullscreen Magical Forest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #0f0524;
+        }
+
+        p {
+            text-transform: none;
+        }
+
+        #model-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            filter: contrast(1.6) saturate(1.4);
+        }
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0f0524;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: wheat;
+        }
+        .progress-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #a78bfa;
+            transition: width 0.3s ease;
+        }
+        .nav-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .annotation {
+            position: absolute;
+            padding: 8px 16px;
+            background: rgba(76, 5, 117, 0.8);
+            color: white;
+            border-radius: 16px;
+            cursor: pointer;
+            z-index: 5;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        .annotation.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        .annotation:hover {
+            transform: scale(1.05) translateY(0);
+        }
+        .content-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px;
+            border-radius: 20px;
+            color: white;
+            text-align: center;
+            z-index: 20;
+            max-width: 80%;
+            width: 600px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            transform: translate(-50%, -40%);
+            pointer-events: none; 
+        }
+        .content-overlay.visible {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+            pointer-events: auto;
+        }
+        .skill-icon {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 5px;
+            font-size: 14px;
+        }
+        #section-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 100%;
+            padding: 0 20px;
+        }
+        @media (max-width: 768px) {
+            .content-overlay {
+                width: 90%;
+                padding: 20px;
+            }
+            .nav-btn {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+            #section-nav {
+                gap: 8px;
+                bottom: 15px;
+            }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Add these new font styles */
+        .content-overlay h1 {
+            font-family: 'Cinzel Decorative', cursive;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .annotation, .nav-btn {
+            font-family: 'MedievalSharp', cursive;
+            letter-spacing: 0.5px;
+        }
+        #loading-overlay h2 {
+            font-family: 'UnifrakturMaguntia', cursive;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+        }
+        .skill-icon {
+            font-family: 'MedievalSharp', cursive;
+        } 
+
+        a{
+            text-decoration:none;
+            color: antiquewhite;
+        }
+
+        /* know more button*/
+        .content-button {
+            background: #fff;
+            color: rgba(36, 5, 36, 0.9);
+            border: none;
+            padding: 10px 20px;
+            margin-top: 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        
+        .content-button:hover {
+            background: #e0e0e0;
+        }
+
+        .bio-section {
+            margin-bottom: 2rem;
+        }
+
+        .skills-grid {
+            display:grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            padding: 0;
+            list-style: none;
+        }
+
+        .skills-grid li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Use Font Awesome or similar for icons */
+        .icon-wand:before { content: "🎯"; }
+        .icon-graduation-cap:before { content: "🎓"; }
+        .icon-html5:before { content: "</>"; }
+        /* Add more icon styles */
+
+        /* resume download*/
+        .nav-btn .magic-icon {
+            transition: transform 0.3s;
+        }
+        .nav-btn:hover .magic-icon {
+            transform: rotate(15deg) scale(1.2);
+        }
+        .nav-btn.downloading {
+            background: rgba(167, 139, 250, 0.3);
+        }
+        .nav-btn.downloading .magic-icon {
+            animation: spin 0.5s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+    </style>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+</head>
+<body>
+    <model-viewer
+        id="model-container"
+        src="/static/models/magic-forest.glb"
+        alt="Magical fantasy Forest"
+        camera-controls
+        shadow-intensity="1.5"
+        exposure="1.2"
+        camera-orbit="0deg 75deg 10m"
+        field-of-view="45deg"
+        min-camera-orbit="auto 60deg 5m"
+        max-camera-orbit="auto 90deg 20m"
+        interaction-policy="allow-when-focused">
+        
+        <!-- Hotspots/Annotations in the 3D model -->
+        <button slot="hotspot-forest" data-position="-2 5 -3" data-normal="0 1 0"></button>
+        <button slot="hotspot-waterfall" data-position="3 2 4" data-normal="0 1 0"></button>
+    </model-viewer>
+
+    <div id="loading-overlay">
+        <h2 style="text-align: center;">You are about to enter <br> Magical Forest</h2>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <!-- Content Overlays -->
+     <!-- HOME-->
+    <div id="intro-overlay" class="content-overlay" style="background: rgba(15, 5, 36, 0.9)">
+        <h1>By the Whisper of Forgotten Deities… Welcome, Seeker</h1>
+        <p ><i> The old tales still breathe here. My hands just give them shape. Stay awhile
+            —the magic remembers curious souls. Would you like to know the storyteller? </i></p>
+    </div>
+
+    <!-- ABOUT-->
+    <div id="forest-overlay" class="content-overlay" style="background: rgba(36, 5, 36, 0.9) ">
+        <h2  style="font-family: 'Cinzel Decorative', serif;">So you’ve found the Storyteller’s Den…
+            Come in, then. <br> But mind the whispers</h2>
+        <p > <i> Here’s the truth—no cloaks, no wands. Just a human who listens to old tales. <br>
+            "Funny how legends begin with mortal hands, isn’t it?"</i>
+        </p>
+        <button id="toggle-content" class="content-button">Reveal the truth</button>
+    </div>
+
+    <!-- project-->
+    <div id="project-overlay" class="content-overlay" style="background: rgba(36, 5, 36, 0.9)">
+        <h1>My Projects</h1>
+        <h3>highway patrolling</h3>
+        <p><i> HTML &nbsp; CSS  &nbsp;JAVASCRIPT &nbsp; PHP</i></p>
+    </div>
+
+    <div id="feature-card" class="content-overlay" style="background: rgba(36, 5, 36, 0.9); display: none; flex-direction: column; align-items: center; padding: 20px; max-width: 400px;">
+        <h2 id="feature-title" style="font-family: 'Cinzel Decorative', serif; margin-bottom: 10px;"></h2>
+        <p id="feature-description" style="font-family: 'Cinzel Decorative', serif; text-align: center;"></p>
+    </div>
+
+    <!-- know moew content-->
+    <div id="new-content" class="content-overlay" style="background: rgba(36, 5, 36, 0.9)">
+        <h3 style="font-family: 'Cinzel Decorative', serif;">The Hand Behind the Magic</h3>
+        <p  ><i>Here lies the truth behind the magic - no spells, just skill:</i></p><br>
+        <h2 style="font-family: 'Cinzel Decorative', serif;">megha ghorpade</h2>
+    <div class="bio-section">
+        <h2 style="font-family: 'Cinzel Decorative', serif;"> Education</h2>
+        <p style="font-family: 'Cinzel Decorative', serif;">bachelor's of computer apllications <br>
+             karnataka university,dharwad [2024]</p>
+    </div>
+
+    <!-- SKILLS-->
+<div class="bio-section" style="font-family: 'Cinzel Decorative', serif;">
+  <h2> Skills</h2>
+  <ul class="skills-grid">
+    <li>HTML</li>
+    <li>CSS </li>
+    <li>JavaScript</li>
+    <li>python </li>
+    <li>Digital Illustration</li>
+    <li>graphic design</li>
+    <li>php </li>
+    <!-- Add more skills as needed -->
+  </ul>
+</div>
+<button onclick="downloadResume()" class="nav-btn">Download Resume</button> 
+
+<script>
+    function downloadResume() {
+        // Visual feedback
+        const btn = event.target;
+        btn.classList.add('downloading');
+        
+        // Trigger download
+        window.open('/download-resume/', '_blank');
+        
+        // Reset button after 2 seconds
+        setTimeout(() => {
+            btn.classList.remove('downloading');
+            // Ensure the "About" nav button content reappears
+            const aboutBtn = document.querySelector('.nav-btn[data-section="forest"]');
+            if (aboutBtn) {
+                aboutBtn.style.display = '';
+            }
+        }, 2000);
+    }
+</script> 
+
+<button id="back-button" class="content-button">Return to Mysteries</button>
+    </div>
+
+    <div id="waterfall-overlay" class="content-overlay" style="background: rgba(5, 36, 36, 0.9)">
+        <h1>Contact</h1>
+        <div>
+            <div class="skill-icon"><a href="https://www.linkedin.com/in/megha-ghorpade-008247314">Linkedin</a></div>
+            <div class="skill-icon"><a href="https://www.behance.net/meghag6">Behance</a></div>
+            <div class="skill-icon"><a href="https://github.com/megha522">Github</a></div>
+        </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div id="section-nav">
+        <button class="nav-btn" data-section="intro" data-orbit="0deg 75deg 10m" data-fov="45deg">Home</button>
+        <button class="nav-btn" data-section="forest" data-orbit="-30deg 60deg 8m" data-fov="50deg">About</button>
+        <button class="nav-btn" data-section="project" data-orbit="10deg 60deg 8m" data-fov="52deg">Project</button>
+        <button class="nav-btn" data-section="waterfall" data-orbit="45deg 45deg 7m" data-fov="55deg">Contact</button>
+    </div>
+
+    <!-- Screen Annotations -->
+    <div class="annotation"  style="left: 70%; top: 30%;">"Logic and legends—both compile beautifully."</div>
+    <div class="annotation"  style="left: 5%; top: 10%;">if (night) <br> { magic.compile() }</div>
+    <div class="annotation"  style="left: 10%; top: 80%;">Indents in code, intention in spells.</div>
+    <div class="annotation"  style="left: 60%; top: 70%;">"My hands are stained with ink, elderberry wine, and coffee rings. One writes the spells,
+        <br> one seals them, and the third debugs the curses. (guess which is deadlier?)"</div>
+    <div class="annotation"  style="left: 30%; top: 10%;">"Just when you think the spell’s broken…  <br>the wind whispers ‘Still With You’ "</div>
+    
+
+    <script>
+        // Main elements
+        const modelViewer = document.querySelector('#model-container');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const progressFill = document.getElementById('progress-fill');
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const annotations = document.querySelectorAll('.annotation');
+        const overlays = {
+            intro: document.getElementById('intro-overlay'),
+            forest: document.getElementById('forest-overlay'),
+            project: document.getElementById('project-overlay'),
+            waterfall: document.getElementById('waterfall-overlay')
+        };
+        
+        // Current active section
+        let currentSection = 'intro';
+        let isAnimating = false;
+
+        // Initialize the application
+        function init() {
+            setupModelViewer();
+            setupEventListeners();
+            showOverlay('intro');
+        }
+    </script>
+    <div class="annotation"  style="left: 70%; top: 60%;">About Me</div>
+    <div class="annotation"  style="left: 20%; top: 70%;">My Skills</div>
+
+    <script>
+        
+        // Initialize the application
+        function init() {
+            setupModelViewer();
+            setupEventListeners();
+            showOverlay('intro');
+        }
+
+        // Set up model viewer
+        function setupModelViewer() {
+            modelViewer.interactionPrompt = 'none';
+            modelViewer.interactionPolicy = 'allow-when-focused';
+        }
+
+        // Set up all event listeners
+        function setupEventListeners() {
+            // Model loading events
+            modelViewer.addEventListener('progress', updateLoadingProgress);
+            modelViewer.addEventListener('error', handleModelError);
+            modelViewer.addEventListener('load', handleModelLoad);
+            
+            // Navigation button clicks
+            navButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const section = btn.dataset.section;
+                    const orbit = btn.dataset.orbit;
+                    const fov = btn.dataset.fov;
+                    navigateToSection(section, orbit, fov);
+                });
+            });
+            
+            // Annotation clicks
+            annotations.forEach(anno => {
+                anno.addEventListener('click', () => {
+                    const target = anno.dataset.target;
+                    const btn = document.querySelector(`.nav-btn[data-section="${target}"]`);
+                    if (btn) btn.click();
+                });
+            });
+            
+            // Hotspot clicks in the 3D model
+            document.querySelectorAll('[slot^="hotspot-"]').forEach(hotspot => {
+                hotspot.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const target = hotspot.getAttribute('slot').split('-')[1];
+                    const btn = document.querySelector(`.nav-btn[data-section="${target}"]`);
+                    if (btn) btn.click();
+                });
+            });
+            
+            // Toggle content buttons
+            // Removed duplicate event listener for toggle-content button to avoid conflict with scene.js
+            // document.getElementById('toggle-content').addEventListener('click', function() {
+            //     document.getElementById('forest-overlay').classList.remove('visible');
+            //     document.getElementById('new-content').style.display = 'block';
+            //     setTimeout(() => {
+            //         document.getElementById('new-content').classList.add('visible');
+            //     }, 10);
+            // });
+            
+            document.getElementById('back-button').addEventListener('click', function() {
+                document.getElementById('new-content').classList.remove('visible');
+                setTimeout(() => {
+                    document.getElementById('new-content').style.display = 'none';
+                    document.getElementById('forest-overlay').classList.add('visible');
+                }, 300);
+            });
+            
+            // Window resize
+            window.addEventListener('resize', () => modelViewer.updateFraming());
+        }
+
+        // Handle loading progress
+        function updateLoadingProgress(event) {
+            const progress = event.detail.totalProgress * 100;
+            progressFill.style.width = `${progress}%`;
+            
+            if (progress >= 100) {
+                setTimeout(() => {
+                    loadingOverlay.style.opacity = '0';
+                    setTimeout(() => loadingOverlay.style.display = 'none', 300);
+                }, 500);
+            }
+        }
+
+        // Handle model loading error
+        function handleModelError() {
+            loadingOverlay.innerHTML = `
+                <h2>Error Loading Model</h2>
+                <p>Could not load the 3D model. Please try again later.</p>
+                <button onclick="window.location.reload()" style="
+                    margin-top: 20px;
+                    padding: 8px 16px;
+                    background: #a78bfa;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                ">Reload</button>
+            `;
+        }
+
+        // Handle successful model load
+        function handleModelLoad() {
+            // Make intro overlay visible
+            showOverlay('intro');
+            
+            // Show annotations after a short delay
+            setTimeout(() => {
+                annotations.forEach(anno => {
+                    anno.classList.add('visible');
+                });
+            }, 1000);
+        }
+
+        // Navigate to a specific section
+function navigateToSection(section, orbit, fov) {
+    if (currentSection === section || isAnimating) return;
+
+    // Validate orbit and fov, provide defaults if undefined
+    const validOrbit = typeof orbit === 'string' ? orbit : '0deg 75deg 10m';
+    const validFov = typeof fov === 'string' ? fov : '45deg';
+
+    currentSection = section;
+    smoothCameraTransition(validOrbit, validFov);
+    showOverlay(section);
+
+    // Ensure "More About Me" is hidden when navigating
+    const newContent = document.getElementById('new-content');
+    if (newContent) {
+        newContent.classList.remove('visible');
+        setTimeout(() => {
+            newContent.style.display = 'none';
+            const forestOverlay = document.getElementById('forest-overlay');
+            if (forestOverlay) forestOverlay.style.display = 'block';
+        }, 300);
+    }
+
+    // Pulse animation on the active button
+    const activeBtn = document.querySelector(`.nav-btn[data-section="${section}"]`);
+    if (activeBtn) {
+        activeBtn.style.animation = 'pulse 0.5s ease';
+        setTimeout(() => activeBtn.style.animation = '', 500);
+    }
+}
+
+        // Show the appropriate overlay
+        function showOverlay(section) {
+            // Hide all overlays first
+            Object.values(overlays).forEach(overlay => {
+                overlay.classList.remove('visible');
+            });
+            
+            // Also hide the "More About Me" overlay
+            document.getElementById('new-content').classList.remove('visible');
+            setTimeout(() => {
+                document.getElementById('new-content').style.display = 'none';
+                document.getElementById('forest-overlay').style.display = 'block';
+            }, 300);
+            
+            // Show the selected overlay
+            if (overlays[section]) {
+                setTimeout(() => {
+                    overlays[section].classList.add('visible');
+                }, 300);
+            }
+        }
+
+        // Smooth camera transition
+function smoothCameraTransition(targetOrbit, targetFov, duration = 1500) {
+    if (isAnimating) return;
+    isAnimating = true;
+
+    // Validate targetOrbit and targetFov, provide defaults if undefined
+    const validTargetOrbit = typeof targetOrbit === 'string' ? targetOrbit : '0deg 75deg 10m';
+    const validTargetFov = typeof targetFov === 'string' ? targetFov : '45deg';
+
+    const startOrbit = modelViewer.cameraOrbit;
+    const startFov = modelViewer.fieldOfView;
+    const startTime = performance.now();
+
+    function animate(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeProgress = 0.5 * (1 - Math.cos(Math.PI * progress));
+
+        // Interpolate values
+        modelViewer.cameraOrbit = interpolateOrbit(startOrbit, validTargetOrbit, easeProgress);
+        modelViewer.fieldOfView = interpolateValue(startFov, validTargetFov, easeProgress);
+
+        // Update annotation visibility
+        updateAnnotationVisibility(validTargetOrbit, progress);
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            isAnimating = false;
+        }
+    }
+
+    requestAnimationFrame(animate);
+}
+
+        // Update annotation visibility based on camera position
+        function updateAnnotationVisibility(targetOrbit, progress) {
+            annotations.forEach(anno => {
+                const targetSection = anno.dataset.target;
+                const btn = document.querySelector(`.nav-btn[data-section="${targetSection}"]`);
+                if (!btn) return;
+                
+                const targetBtnOrbit = btn.dataset.orbit;
+                
+                // Calculate similarity between current target and annotation's target
+                const similarity = calculateOrbitSimilarity(targetOrbit, targetBtnOrbit);
+                const visibility = 1 - Math.min(similarity / 30, 1) * (1 - progress);
+                
+                anno.style.opacity = visibility;
+                anno.style.pointerEvents = visibility > 0.3 ? 'auto' : 'none';
+            });
+        }
+
+        // Calculate similarity between two camera orbits
+        function calculateOrbitSimilarity(orbit1, orbit2) {
+            const o1 = parseOrbit(orbit1);
+            const o2 = parseOrbit(orbit2);
+            
+            return Math.sqrt(
+                Math.pow(o1.theta - o2.theta, 2) + 
+                Math.pow(o1.phi - o2.phi, 2)
+            );
+        }
+
+        // Helper function to interpolate camera orbit
+        function interpolateOrbit(start, target, progress) {
+            const s = parseOrbit(start);
+            const t = parseOrbit(target);
+            return `${s.theta + (t.theta - s.theta) * progress}deg ${
+                   s.phi + (t.phi - s.phi) * progress}deg ${
+                   s.radius + (t.radius - s.radius) * progress}m`;
+        }
+
+        // Helper function to interpolate values
+        function interpolateValue(start, target, progress) {
+            return parseFloat(start) + (parseFloat(target) - parseFloat(start)) * progress + 'deg';
+        }
+
+        // Helper function to parse orbit string
+        function parseOrbit(orbit) {
+            if (!orbit || typeof orbit !== 'string') {
+                console.warn('Invalid orbit string:', orbit);
+                return { theta: 0, phi: 75, radius: 10 };
+            }
+            const parts = orbit.split(' ');
+            return {
+                theta: parseFloat(parts[0]),
+                phi: parseFloat(parts[1]),
+                radius: parseFloat(parts[2])
+            };
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+    <script type="module" src="/static/js/scene.js"></script>
+</body>
+
+</html>
