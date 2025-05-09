@@ -1,0 +1,12 @@
+# Ignore the file that contains the secret key
+secret_key.py
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore database file
+db.sqlite3
+
+# Ignore virtual environment folder
+pyenvi/
